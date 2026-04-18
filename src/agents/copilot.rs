@@ -18,39 +18,36 @@ impl AgentConfig for Copilot {
 
         // Main instructions file
         let main_path = project_root.join(".github/copilot-instructions.md");
-        if main_path.exists() {
-            if let Ok(meta) = main_path.metadata() {
-                configs.push(DetectedConfig {
-                    path: main_path,
-                    modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
-                    agent_name: "copilot".to_string(),
-                });
-            }
+        if main_path.exists()
+            && let Ok(meta) = main_path.metadata()
+        {
+            configs.push(DetectedConfig {
+                path: main_path,
+                modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
+                agent_name: "copilot".to_string(),
+            });
         }
 
         // Scoped instruction files
         let instructions_dir = project_root.join(".github/instructions");
-        if instructions_dir.is_dir() {
-            if let Ok(entries) = std::fs::read_dir(&instructions_dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.extension().is_some_and(|ext| ext == "md")
-                        && path
-                            .file_name()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .ends_with(".instructions.md")
-                    {
-                        if let Ok(meta) = path.metadata() {
-                            configs.push(DetectedConfig {
-                                path,
-                                modified: meta
-                                    .modified()
-                                    .unwrap_or(std::time::SystemTime::UNIX_EPOCH),
-                                agent_name: "copilot".to_string(),
-                            });
-                        }
-                    }
+        if instructions_dir.is_dir()
+            && let Ok(entries) = std::fs::read_dir(&instructions_dir)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().is_some_and(|ext| ext == "md")
+                    && path
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .ends_with(".instructions.md")
+                    && let Ok(meta) = path.metadata()
+                {
+                    configs.push(DetectedConfig {
+                        path,
+                        modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
+                        agent_name: "copilot".to_string(),
+                    });
                 }
             }
         }
@@ -63,16 +60,16 @@ impl AgentConfig for Copilot {
         let mut rules = UniversalRules::new();
 
         // Check if this is a scoped instruction file (has applyTo frontmatter)
-        if let Some(ref fm_map) = fm {
-            if let Some(apply_to) = fm_map.get("applyTo") {
-                let pattern = yaml_value_to_string(apply_to);
-                if !pattern.is_empty() {
-                    rules.scoped_rules.push(ScopedRule {
-                        pattern,
-                        instruction: body.trim().to_string(),
-                    });
-                    return Ok(rules);
-                }
+        if let Some(ref fm_map) = fm
+            && let Some(apply_to) = fm_map.get("applyTo")
+        {
+            let pattern = yaml_value_to_string(apply_to);
+            if !pattern.is_empty() {
+                rules.scoped_rules.push(ScopedRule {
+                    pattern,
+                    instruction: body.trim().to_string(),
+                });
+                return Ok(rules);
             }
         }
 
@@ -213,10 +210,8 @@ fn slugify_pattern(pattern: &str) -> String {
     pattern
         .replace("**", "all")
         .replace('*', "any")
-        .replace('/', "-")
-        .replace('.', "-")
-        .replace('{', "")
-        .replace('}', "")
+        .replace(['/', '.'], "-")
+        .replace(['{', '}'], "")
         .replace(',', "-")
         .trim_matches('-')
         .to_string()

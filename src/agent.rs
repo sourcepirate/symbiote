@@ -28,6 +28,7 @@ pub trait AgentConfig {
     fn serialize(&self, rules: &UniversalRules) -> Vec<(PathBuf, String)>;
 
     /// The default/primary marker file paths (relative to project root)
+    #[allow(dead_code)]
     fn default_paths(&self) -> Vec<PathBuf>;
 }
 

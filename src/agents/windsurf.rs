@@ -17,21 +17,19 @@ impl AgentConfig for Windsurf {
         let mut configs = Vec::new();
 
         let rules_dir = project_root.join(".windsurf/rules");
-        if rules_dir.is_dir() {
-            if let Ok(entries) = std::fs::read_dir(&rules_dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.extension().is_some_and(|ext| ext == "md") {
-                        if let Ok(meta) = path.metadata() {
-                            configs.push(DetectedConfig {
-                                path,
-                                modified: meta
-                                    .modified()
-                                    .unwrap_or(std::time::SystemTime::UNIX_EPOCH),
-                                agent_name: "windsurf".to_string(),
-                            });
-                        }
-                    }
+        if rules_dir.is_dir()
+            && let Ok(entries) = std::fs::read_dir(&rules_dir)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().is_some_and(|ext| ext == "md")
+                    && let Ok(meta) = path.metadata()
+                {
+                    configs.push(DetectedConfig {
+                        path,
+                        modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
+                        agent_name: "windsurf".to_string(),
+                    });
                 }
             }
         }
@@ -176,7 +174,10 @@ fn parse_body_into_rules(body: &str, rules: &mut UniversalRules) {
     let trimmed = current_content.trim();
     if !trimmed.is_empty() {
         if in_first_section && rules.project_context.is_empty() {
-            if trimmed.lines().any(|l| l.trim().starts_with("- ") || l.trim().starts_with("* ")) {
+            if trimmed
+                .lines()
+                .any(|l| l.trim().starts_with("- ") || l.trim().starts_with("* "))
+            {
                 add_standards(trimmed, rules);
             } else {
                 rules.project_context = trimmed.to_string();
@@ -205,10 +206,8 @@ fn slugify_pattern(pattern: &str) -> String {
     pattern
         .replace("**", "all")
         .replace('*', "any")
-        .replace('/', "-")
-        .replace('.', "-")
-        .replace('{', "")
-        .replace('}', "")
+        .replace(['/', '.'], "-")
+        .replace(['{', '}'], "")
         .replace(',', "-")
         .trim_matches('-')
         .to_string()
@@ -236,7 +235,11 @@ mod tests {
         let rules = windsurf
             .parse(content, Path::new(".windsurf/rules/general.md"))
             .unwrap();
-        assert!(rules.coding_standards.contains(&"Use bun, not npm".to_string()));
+        assert!(
+            rules
+                .coding_standards
+                .contains(&"Use bun, not npm".to_string())
+        );
     }
 
     #[test]

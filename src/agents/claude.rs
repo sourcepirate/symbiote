@@ -26,13 +26,13 @@ impl AgentConfig for Claude {
 
         // .claude/rules/*.md
         let rules_dir = project_root.join(".claude/rules");
-        if rules_dir.is_dir() {
-            if let Ok(entries) = std::fs::read_dir(&rules_dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.extension().is_some_and(|ext| ext == "md") {
-                        detect_file(&path, &mut configs);
-                    }
+        if rules_dir.is_dir()
+            && let Ok(entries) = std::fs::read_dir(&rules_dir)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().is_some_and(|ext| ext == "md") {
+                    detect_file(&path, &mut configs);
                 }
             }
         }
@@ -48,17 +48,17 @@ impl AgentConfig for Claude {
 
         if is_rule_file {
             let (fm, body) = frontmatter::parse_frontmatter(content);
-            if let Some(ref fm_map) = fm {
-                if let Some(paths_val) = fm_map.get("paths") {
-                    let patterns = yaml_value_to_patterns(paths_val);
-                    for pattern in patterns {
-                        rules.scoped_rules.push(ScopedRule {
-                            pattern,
-                            instruction: body.trim().to_string(),
-                        });
-                    }
-                    return Ok(rules);
+            if let Some(ref fm_map) = fm
+                && let Some(paths_val) = fm_map.get("paths")
+            {
+                let patterns = yaml_value_to_patterns(paths_val);
+                for pattern in patterns {
+                    rules.scoped_rules.push(ScopedRule {
+                        pattern,
+                        instruction: body.trim().to_string(),
+                    });
                 }
+                return Ok(rules);
             }
             // Rule file without frontmatter → treat as coding standard
             rules.coding_standards.push(body.trim().to_string());
@@ -116,14 +116,14 @@ impl AgentConfig for Claude {
 }
 
 fn detect_file(path: &Path, configs: &mut Vec<DetectedConfig>) {
-    if path.exists() {
-        if let Ok(meta) = path.metadata() {
-            configs.push(DetectedConfig {
-                path: path.to_path_buf(),
-                modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
-                agent_name: "claude".to_string(),
-            });
-        }
+    if path.exists()
+        && let Ok(meta) = path.metadata()
+    {
+        configs.push(DetectedConfig {
+            path: path.to_path_buf(),
+            modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
+            agent_name: "claude".to_string(),
+        });
     }
 }
 
@@ -195,10 +195,8 @@ fn slugify_pattern(pattern: &str) -> String {
     pattern
         .replace("**", "all")
         .replace('*', "any")
-        .replace('/', "-")
-        .replace('.', "-")
-        .replace('{', "")
-        .replace('}', "")
+        .replace(['/', '.'], "-")
+        .replace(['{', '}'], "")
         .replace(',', "-")
         .trim_matches('-')
         .to_string()

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::agent::{all_agents, DetectedConfig};
+use crate::agent::{DetectedConfig, all_agents};
 
 /// Result of scanning a project for agent configurations
 #[derive(Debug)]

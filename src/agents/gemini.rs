@@ -15,14 +15,14 @@ impl AgentConfig for Gemini {
         let mut configs = Vec::new();
 
         let path = project_root.join("GEMINI.md");
-        if path.exists() {
-            if let Ok(meta) = path.metadata() {
-                configs.push(DetectedConfig {
-                    path,
-                    modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
-                    agent_name: "gemini".to_string(),
-                });
-            }
+        if path.exists()
+            && let Ok(meta) = path.metadata()
+        {
+            configs.push(DetectedConfig {
+                path,
+                modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
+                agent_name: "gemini".to_string(),
+            });
         }
 
         configs
@@ -117,16 +117,17 @@ fn flush_gemini_section(
     }
 
     // Check if this is a "File-Specific Rules" subsection with a backtick-quoted glob
-    if let Some(h) = header {
-        if h.starts_with('`') && h.ends_with('`') {
-            let pattern = h.trim_matches('`').to_string();
-            if !pattern.is_empty() && !trimmed.is_empty() {
-                rules.scoped_rules.push(ScopedRule {
-                    pattern,
-                    instruction: trimmed.to_string(),
-                });
-                return;
-            }
+    if let Some(h) = header
+        && h.starts_with('`')
+        && h.ends_with('`')
+    {
+        let pattern = h.trim_matches('`').to_string();
+        if !pattern.is_empty() && !trimmed.is_empty() {
+            rules.scoped_rules.push(ScopedRule {
+                pattern,
+                instruction: trimmed.to_string(),
+            });
+            return;
         }
     }
 

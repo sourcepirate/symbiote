@@ -16,26 +16,26 @@ impl AgentConfig for OpenCode {
 
         // .opencode.json (config file — indicates OpenCode is used)
         let config_path = project_root.join(".opencode.json");
-        if config_path.exists() {
-            if let Ok(meta) = config_path.metadata() {
-                configs.push(DetectedConfig {
-                    path: config_path,
-                    modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
-                    agent_name: "opencode".to_string(),
-                });
-            }
+        if config_path.exists()
+            && let Ok(meta) = config_path.metadata()
+        {
+            configs.push(DetectedConfig {
+                path: config_path,
+                modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
+                agent_name: "opencode".to_string(),
+            });
         }
 
         // OpenCode.md (memory/instructions file)
         let md_path = project_root.join("OpenCode.md");
-        if md_path.exists() {
-            if let Ok(meta) = md_path.metadata() {
-                configs.push(DetectedConfig {
-                    path: md_path,
-                    modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
-                    agent_name: "opencode".to_string(),
-                });
-            }
+        if md_path.exists()
+            && let Ok(meta) = md_path.metadata()
+        {
+            configs.push(DetectedConfig {
+                path: md_path,
+                modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
+                agent_name: "opencode".to_string(),
+            });
         }
 
         configs
@@ -86,10 +86,7 @@ impl AgentConfig for OpenCode {
             return vec![];
         }
 
-        vec![(
-            PathBuf::from("OpenCode.md"),
-            body.trim().to_string() + "\n",
-        )]
+        vec![(PathBuf::from("OpenCode.md"), body.trim().to_string() + "\n")]
     }
 
     fn default_paths(&self) -> Vec<PathBuf> {
@@ -153,7 +150,11 @@ mod tests {
         let content = "# Project\n\nA Rust project.\n\n## Rules\n\n- Test everything\n";
         let rules = opencode.parse(content, Path::new("OpenCode.md")).unwrap();
         assert_eq!(rules.project_context, "A Rust project.");
-        assert!(rules.coding_standards.contains(&"Test everything".to_string()));
+        assert!(
+            rules
+                .coding_standards
+                .contains(&"Test everything".to_string())
+        );
     }
 
     #[test]

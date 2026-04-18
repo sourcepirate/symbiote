@@ -18,33 +18,33 @@ impl AgentConfig for Cursor {
 
         // Legacy .cursorrules
         let legacy = project_root.join(".cursorrules");
-        if legacy.exists() {
-            if let Ok(meta) = legacy.metadata() {
-                configs.push(DetectedConfig {
-                    path: legacy,
-                    modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
-                    agent_name: "cursor".to_string(),
-                });
-            }
+        if legacy.exists()
+            && let Ok(meta) = legacy.metadata()
+        {
+            configs.push(DetectedConfig {
+                path: legacy,
+                modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
+                agent_name: "cursor".to_string(),
+            });
         }
 
         // New .cursor/rules/*.mdc and .cursor/rules/*.md
         let rules_dir = project_root.join(".cursor/rules");
-        if rules_dir.is_dir() {
-            if let Ok(entries) = std::fs::read_dir(&rules_dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.extension().is_some_and(|ext| ext == "mdc" || ext == "md") {
-                        if let Ok(meta) = path.metadata() {
-                            configs.push(DetectedConfig {
-                                path,
-                                modified: meta
-                                    .modified()
-                                    .unwrap_or(std::time::SystemTime::UNIX_EPOCH),
-                                agent_name: "cursor".to_string(),
-                            });
-                        }
-                    }
+        if rules_dir.is_dir()
+            && let Ok(entries) = std::fs::read_dir(&rules_dir)
+        {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path
+                    .extension()
+                    .is_some_and(|ext| ext == "mdc" || ext == "md")
+                    && let Ok(meta) = path.metadata()
+                {
+                    configs.push(DetectedConfig {
+                        path,
+                        modified: meta.modified().unwrap_or(std::time::SystemTime::UNIX_EPOCH),
+                        agent_name: "cursor".to_string(),
+                    });
                 }
             }
         }
@@ -114,10 +114,7 @@ impl AgentConfig for Cursor {
                 "description".to_string(),
                 serde_yaml::Value::String("General project rules".to_string()),
             );
-            fm.insert(
-                "alwaysApply".to_string(),
-                serde_yaml::Value::Bool(true),
-            );
+            fm.insert("alwaysApply".to_string(), serde_yaml::Value::Bool(true));
 
             let content = frontmatter::serialize_frontmatter(&fm, body.trim());
             files.push((PathBuf::from(".cursor/rules/general.mdc"), content));
@@ -137,10 +134,7 @@ impl AgentConfig for Cursor {
                 "globs".to_string(),
                 serde_yaml::Value::String(rule.pattern.clone()),
             );
-            fm.insert(
-                "alwaysApply".to_string(),
-                serde_yaml::Value::Bool(false),
-            );
+            fm.insert("alwaysApply".to_string(), serde_yaml::Value::Bool(false));
 
             let content = frontmatter::serialize_frontmatter(&fm, &rule.instruction);
             files.push((path, content));
@@ -197,7 +191,10 @@ fn parse_body_as_standards(content: &str, rules: &mut UniversalRules) {
     if !trimmed.is_empty() {
         if in_first_section && rules.project_context.is_empty() {
             // If content has bullet points, treat as standards directly
-            if trimmed.lines().any(|l| l.trim().starts_with("- ") || l.trim().starts_with("* ")) {
+            if trimmed
+                .lines()
+                .any(|l| l.trim().starts_with("- ") || l.trim().starts_with("* "))
+            {
                 add_standards(trimmed, rules);
             } else {
                 rules.project_context = trimmed.to_string();
@@ -226,10 +223,8 @@ fn slugify_pattern(pattern: &str) -> String {
     pattern
         .replace("**", "all")
         .replace('*', "any")
-        .replace('/', "-")
-        .replace('.', "-")
-        .replace('{', "")
-        .replace('}', "")
+        .replace(['/', '.'], "-")
+        .replace(['{', '}'], "")
         .replace(',', "-")
         .trim_matches('-')
         .to_string()
@@ -242,8 +237,7 @@ mod tests {
     #[test]
     fn test_parse_mdc_with_globs() {
         let cursor = Cursor;
-        let content =
-            "---\ndescription: \"Test rules\"\nglobs: \"**/*.test.ts\"\nalwaysApply: false\n---\n\nUse describe/it blocks.";
+        let content = "---\ndescription: \"Test rules\"\nglobs: \"**/*.test.ts\"\nalwaysApply: false\n---\n\nUse describe/it blocks.";
         let rules = cursor
             .parse(content, Path::new(".cursor/rules/testing.mdc"))
             .unwrap();
@@ -258,16 +252,18 @@ mod tests {
         let rules = cursor
             .parse(content, Path::new(".cursor/rules/general.mdc"))
             .unwrap();
-        assert!(rules.coding_standards.contains(&"Use snake_case".to_string()));
+        assert!(
+            rules
+                .coding_standards
+                .contains(&"Use snake_case".to_string())
+        );
     }
 
     #[test]
     fn test_parse_legacy_cursorrules() {
         let cursor = Cursor;
         let content = "- Always use TypeScript\n- Prefer functional style\n";
-        let rules = cursor
-            .parse(content, Path::new(".cursorrules"))
-            .unwrap();
+        let rules = cursor.parse(content, Path::new(".cursorrules")).unwrap();
         assert_eq!(rules.coding_standards.len(), 2);
     }
 

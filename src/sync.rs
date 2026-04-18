@@ -143,13 +143,13 @@ fn sync_agent(
         }
 
         // Create parent directories
-        if let Some(parent) = full_path.parent() {
-            if let Err(e) = fs::create_dir_all(parent) {
-                result
-                    .errors
-                    .push(format!("Failed to create directory for {}: {}", rel_str, e));
-                continue;
-            }
+        if let Some(parent) = full_path.parent()
+            && let Err(e) = fs::create_dir_all(parent)
+        {
+            result
+                .errors
+                .push(format!("Failed to create directory for {}: {}", rel_str, e));
+            continue;
         }
 
         // Write the file
