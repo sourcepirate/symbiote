@@ -1,3 +1,4 @@
+use std::cmp::Reverse;
 use std::path::Path;
 
 use crate::agent::{DetectedConfig, all_agents};
@@ -22,7 +23,7 @@ pub fn discover(project_root: &Path) -> DiscoveryResult {
     }
 
     // Sort by modification time, newest first
-    configs.sort_by(|a, b| b.modified.cmp(&a.modified));
+    configs.sort_by_key(|c| Reverse(c.modified));
 
     let leader = configs.first().cloned();
 
